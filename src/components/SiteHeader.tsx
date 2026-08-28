@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
-import { Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "./ThemeToggle";
+import logo from "@/assets/taxaflow-logo.png";
 
 export const SiteHeader = ({ showAuth = true }: { showAuth?: boolean }) => {
   const navigate = useNavigate();
@@ -9,9 +9,7 @@ export const SiteHeader = ({ showAuth = true }: { showAuth?: boolean }) => {
     <header className="sticky top-0 z-40 w-full border-b border-border/60 bg-background/70 backdrop-blur-xl">
       <div className="container flex h-16 items-center justify-between">
         <Link to="/" className="flex items-center gap-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-primary shadow-soft">
-            <Wallet className="h-5 w-5 text-primary-foreground" />
-          </div>
+          <img src={logo} alt="TaxaFlow logo" width={36} height={36} className="h-9 w-9 rounded-xl object-contain" />
           <span className="text-lg font-semibold tracking-tight">TaxaFlow</span>
         </Link>
         <nav className="hidden items-center gap-8 md:flex">

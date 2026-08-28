@@ -9,20 +9,83 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { COUNTRIES } from "@/lib/taxa";
 import { toast } from "@/hooks/use-toast";
 
+type Account = { name: string; email: string; password: string; country: string; currency: string };
+
+const ACCOUNTS_KEY = "taxaflow_accounts";
+
+const readAccounts = (): Account[] => {
+  try {
+    const raw = localStorage.getItem(ACCOUNTS_KEY);
+    return raw ? (JSON.parse(raw) as Account[]) : [];
+  } catch {
+    return [];
+  }
+};
+
 const Auth = () => {
   const navigate = useNavigate();
   const [mode, setMode] = useState<"login" | "signup">("signup");
+  const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState({ name: "", email: "", password: "", country: "IN", currency: "INR" });
+
+  const switchMode = (m: "login" | "signup") => {
+    setMode(m);
+    setError(null);
+  };
+
+  const signIn = (acc: Account) => {
+    localStorage.setItem(
+      "taxaflow_user",
+      JSON.stringify({ name: acc.name, email: acc.email, country: acc.country, currency: acc.currency })
+    );
+    navigate("/dashboard");
+  };
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
-    const country = COUNTRIES.find((c) => c.code === form.country)!;
-    localStorage.setItem(
-      "taxaflow_user",
-      JSON.stringify({ name: form.name || "Friend", email: form.email, country: country.code, currency: form.currency })
-    );
-    toast({ title: mode === "signup" ? "Welcome to TaxaFlow!" : "Welcome back!", description: "Loading your dashboard…" });
-    navigate("/dashboard");
+    setError(null);
+    const email = form.email.trim().toLowerCase();
+    const accounts = readAccounts();
+    const existing = accounts.find((a) => a.email === email);
+
+    if (mode === "signup") {
+      if (existing) {
+        setError("An account with this email already exists. Please log in instead.");
+        setMode("login");
+        setForm({ ...form, password: "" });
+        toast({
+          title: "Account already exists",
+          description: "This email is already registered — log in with your password.",
+          variant: "destructive",
+        });
+        return;
+      }
+      const country = COUNTRIES.find((c) => c.code === form.country)!;
+      const acc: Account = {
+        name: form.name.trim() || "Friend",
+        email,
+        password: form.password,
+        country: country.code,
+        currency: form.currency,
+      };
+      localStorage.setItem(ACCOUNTS_KEY, JSON.stringify([...accounts, acc]));
+      toast({ title: "Welcome to TaxaFlow!", description: "Loading your dashboard…" });
+      signIn(acc);
+      return;
+    }
+
+    if (!existing) {
+      setError("No account found with this email. Create one to get started.");
+      toast({ title: "Account not found", description: "Sign up to create your account.", variant: "destructive" });
+      return;
+    }
+    if (existing.password !== form.password) {
+      setError("Incorrect password. Please try again.");
+      toast({ title: "Incorrect password", description: "Check your password and retry.", variant: "destructive" });
+      return;
+    }
+    toast({ title: "Welcome back!", description: "Loading your dashboard…" });
+    signIn(existing);
   };
 
   return (
@@ -44,7 +107,7 @@ const Auth = () => {
                 <button
                   key={m}
                   type="button"
-                  onClick={() => setMode(m)}
+                  onClick={() => switchMode(m)}
                   className={`rounded-lg px-3 py-2 text-sm font-medium transition-smooth ${
                     mode === m ? "bg-card text-foreground shadow-soft" : "text-muted-foreground"
                   }`}
@@ -53,6 +116,15 @@ const Auth = () => {
                 </button>
               ))}
             </div>
+
+            {error && (
+              <div
+                role="alert"
+                className="mb-4 rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive"
+              >
+                {error}
+              </div>
+            )}
 
             <form onSubmit={submit} className="space-y-4">
               {mode === "signup" && (
