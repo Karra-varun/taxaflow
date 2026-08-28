@@ -107,7 +107,7 @@ const Auth = () => {
                 <button
                   key={m}
                   type="button"
-                  onClick={() => setMode(m)}
+                  onClick={() => switchMode(m)}
                   className={`rounded-lg px-3 py-2 text-sm font-medium transition-smooth ${
                     mode === m ? "bg-card text-foreground shadow-soft" : "text-muted-foreground"
                   }`}
@@ -116,6 +116,15 @@ const Auth = () => {
                 </button>
               ))}
             </div>
+
+            {error && (
+              <div
+                role="alert"
+                className="mb-4 rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive"
+              >
+                {error}
+              </div>
+            )}
 
             <form onSubmit={submit} className="space-y-4">
               {mode === "signup" && (
